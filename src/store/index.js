@@ -4,14 +4,24 @@ import Vuex from 'vuex'
 Vue.use(Vuex)
 
 export default new Vuex.Store({
-  state: {
-  },
-  getters: {
-  },
-  mutations: {
-  },
-  actions: {
-  },
-  modules: {
-  }
+    state: {
+        pokemonList: [],
+    },
+    getters: {
+        getPokemonList: state => {
+            return state.pokemonList;
+        },
+    },
+    mutations: {
+        setPokemonList(state, payload) {
+            state.pokemonList = payload;
+        }
+    },
+    actions: {
+        setPokemonList({commit}, payload) {
+            commit('setPokemonList', payload);
+        }
+    },
+    modules: {
+    }
 })
