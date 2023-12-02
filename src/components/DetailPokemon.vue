@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showModal" class="pokemon-modal" @click.self="closeModal()">
+    <div v-if="showModal" class="pokemon-modal">
         <div class="close" @click="closeModal()">
             <img src="../assets/img/close.svg" alt="close">
         </div>

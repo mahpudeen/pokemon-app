@@ -68,10 +68,7 @@
         </div>
     </div>
 </template>
-
 <script>
-// @ is an alias to /src
-/* eslint-disable */
 import axios from 'axios'
 import DetailPokemon from '@/components/DetailPokemon.vue'
 export default {
@@ -109,6 +106,7 @@ export default {
         this.fetchPokemon()
     },
     computed: {
+        // Returns a sorted, de-duplicated array of Pokemon based on 'id'.
         pokemonListSort() {
             let uniquePokemonList = Array.from(new Set(this.pokemonList.map(pokemon => pokemon.id)))
                 .map(id => {
@@ -117,16 +115,8 @@ export default {
             return uniquePokemonList.sort((a, b) => a.id - b.id);
         }
     },
-    watch: {
-        search: function (val) {
-            let self = this
-            clearTimeout(this.timeout);
-            this.timeout = setTimeout(() => {
-                self.fetchSuggestions();
-            }, 1000);
-        }
-    },
     methods: {
+        // Fetches suggestions based on the current search term.
         fetchSuggestions() {
             if (this.search.length > 0) {
                 this.showSuggestions = true;
@@ -137,6 +127,7 @@ export default {
                 this.resetSuggestions();
             }
         },
+        // Searches for Pokemon based on the current search term.
         searchPokemon() {
             if (this.search.length > 0) {
                 this.resetList();
@@ -146,23 +137,27 @@ export default {
                 this.getPokemonVuex(this.$store.getters.getPokemonList);
             }
         },
+        // Selects a suggestion and fetches the corresponding Pokemon.
         selectSuggestion(suggestion) {
             this.search = suggestion.name;
             this.showSuggestions = false;
             this.resetList();
             this.getPokemonVuex([suggestion]);
         },
+        // Resets the suggestions and search term.
         resetSuggestions() {
             this.showSuggestions = false;
             this.suggestions = [];
             this.suggestionLists = [];
             this.search = '';
         },
+        // Resets the Pokemon list and the range of displayed Pokemon.
         resetList() {
             this.pokemonList = [];
             this.from = 0
             this.to = 10
         },
+        // Fetches the list of Pokemon types.
         async fetchType() {
             let response = await axios.get('https://pokeapi.co/api/v2/type')
             this.typeList = [{'name': ''}]
@@ -170,6 +165,7 @@ export default {
                 this.typeList.push(e)
             });
         },
+        // Changes the selected Pokemon type and fetches the corresponding Pokemon.
         async changeType(item) {
             this.isLoading = true
             this.typePokemon = item.name
@@ -190,28 +186,10 @@ export default {
                 console.error('Error fetching Pokemon:', error);
             }
         },
-        handleScroll() {
-            // Check if the user has scrolled to the bottom
-            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 10 && !this.isLoading && this.from < this.totalPokemon) {
-                if (this.suggestionLists.length > 0 && this.suggestionLists.length < this.to) {
-                    this.isLoading = false;
-                    return;
-                } 
-                this.isLoading = true;
-                setTimeout(() => {
-                    this.from = this.to
-                    this.to += 10
-                    if(this.suggestionLists.length > 0) {
-                        this.getPokemonVuex(this.suggestionLists);
-                    } else {
-                        this.getPokemonVuex(this.$store.getters.getPokemonList);
-                    }
-                }, 1000);
-            }
-        },
+        // Fetches the list of Pokemon.
         async fetchPokemon() {
             try {
-                let response = await axios.get('https://pokeapi.co/api/v2/pokemon?limit=50');
+                let response = await axios.get('https://pokeapi.co/api/v2/pokemon?limit=1500');
                 let pokemonList = response.data.results.map(item => this.transformedList(item));
                 this.totalPokemon = response.data.results.length;
                 this.$store.commit('setPokemonList', pokemonList);
@@ -220,6 +198,7 @@ export default {
                 console.error('Error fetching Pokemon:', error);
             }
         },
+        // Fetches the details of a subset of Pokemon from the Vuex store.
         async getPokemonVuex(list) {
             let pokemonList = list.slice(this.from, this.to);
             let pokemonListDetail = [...this.pokemonList];
@@ -247,6 +226,7 @@ export default {
             this.pokemonList= pokemonListDetail;
             this.isLoading = false;
         },
+        // Transforms a Pokemon item to a new format.
         transformedList(item) {
             const name = item.name.charAt(0).toUpperCase() + item.name.slice(1).replace(/-/g, ' ');
             const url = item.url;
@@ -255,6 +235,7 @@ export default {
                 name,url,id
             };
         },
+        // Converts an array of stats to a JSON object.
         convertToJsonStats(array) {
             let result = {};
             for (let item of array) {
@@ -262,6 +243,7 @@ export default {
             }
             return result;
         },
+        // Shows the details of a selected Pokemon.
         showDetailPokemon(item) {
             this.detailPokemon = {
                 modal: true,
@@ -269,7 +251,35 @@ export default {
                 typePokemon : this.typePokemon ? this.typePokemon : item.types[0]
             }
         },
+        // Handles the scroll event to load more Pokemon.
+        handleScroll() {
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 10 && !this.isLoading && this.from < this.totalPokemon) {
+                if (this.suggestionLists.length > 0 && this.suggestionLists.length < this.to) {
+                    this.isLoading = false;
+                    return;
+                } 
+                this.isLoading = true;
+                setTimeout(() => {
+                    this.from = this.to
+                    this.to += 10
+                    if(this.suggestionLists.length > 0) {
+                        this.getPokemonVuex(this.suggestionLists);
+                    } else {
+                        this.getPokemonVuex(this.$store.getters.getPokemonList);
+                    }
+                }, 1000);
+            }
+        },
     },
-  
+    watch: {
+        // Watch for changes to the 'search' data property. When a change occurs, call the fetchSuggestions() method.
+        search: function () {
+            let self = this
+            clearTimeout(this.timeout);
+            this.timeout = setTimeout(() => {
+                self.fetchSuggestions();
+            }, 1000);
+        }
+    },
 }
 </script>
